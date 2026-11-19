@@ -1,0 +1,36 @@
+HardFaultPlugin for TrafficMonitor
+==================================
+
+This project is a derivative work of TrafficMonitor.
+
+Files and their copyright holders
+---------------------------------
+
+plugin/PluginInterface.h
+    Copyright (C) 2021 Zhong Yang <zhongyang219@hotmail.com>
+    Taken verbatim from the TrafficMonitor project:
+    https://github.com/zhongyang219/TrafficMonitor (include/PluginInterface.h)
+    Licensed under the "Anti 996" License Version 1.0.
+
+plugin/HardFaultPlugin.cpp
+CMakeLists.txt
+.github/workflows/build.yml
+README.md
+    Copyright (c) 2026 weifeng-work
+    Licensed under the "Anti 996" License Version 1.0.
+
+License
+-------
+
+All parts of this repository are distributed under the "Anti 996" License
+Version 1.0, whose full text is in the LICENSE file. As required by
+condition 1 of that license, the LICENSE file and this notice must be
+kept and displayed without modification in any redistributed or
+derivative copy of this work.
+
+No warranty
+-----------
+
+The work is provided "AS IS", without warranty of any kind. This plugin
+reads Windows performance counters only; it does not collect, store or
+transmit any personal data, and it makes no network requests.

@@ -1,6 +1,10 @@
 // HardFaultPlugin - TrafficMonitor 插件：显示 Windows 硬缺页（Hard Faults/sec）
 // 数据源：PDH 计数器 \Memory\Pages Input/sec
 // 报警：滑动均值超过阈值并持续 N 秒，调用主程序 ShowNotifyMessage 弹气泡 + 提示音
+//
+// Copyright (c) 2026 weifeng-work
+// 本文件是 TrafficMonitor（Copyright (C) 2021 Zhong Yang）的衍生作品，
+// 遵循 "Anti 996" License Version 1.0，详见仓库根目录 LICENSE 与 NOTICE。
 #include <windows.h>
 #include <pdh.h>
 #include <pdhmsg.h>

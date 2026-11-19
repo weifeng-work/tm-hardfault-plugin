@@ -77,5 +77,12 @@ paused=0        ; 1=暂停报警（菜单里可切换）
 
 ## 说明
 
-- `plugin/PluginInterface.h` 取自 TrafficMonitor 官方仓库 `include/PluginInterface.h`，仅用于编译接口。
+- `plugin/PluginInterface.h` 取自 TrafficMonitor 官方仓库 `include/PluginInterface.h`，版权归 Zhong Yang 所有，仅用于编译接口。
 - 只支持 x64（TM 1.86 x64）。
+- 插件只读取 Windows 性能计数器，不联网、不采集、不上传任何数据。
+
+## 许可证
+
+本项目是 [TrafficMonitor](https://github.com/zhongyang219/TrafficMonitor) 的衍生作品，整体遵循 **"Anti 996" License Version 1.0**，全文见 [LICENSE](LICENSE)，各文件的版权归属见 [NOTICE](NOTICE)。
+
+转载或再分发时，请保留 `LICENSE` 与 `NOTICE` 原文。
