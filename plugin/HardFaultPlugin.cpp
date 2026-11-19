@@ -64,14 +64,22 @@ public:
     void OnInitialize(ITrafficMonitor* pApp) override;
     const wchar_t* GetTooltipInfo() override { return m_tip.c_str(); }
 
+    // ---- 右键菜单命令（TrafficMonitor API >= 5）----
+    int GetCommandCount() override { return 5; }
+    const wchar_t* GetCommandName(int index) override;
+    void OnPluginCommand(int index, void* hWnd, void* para) override;
+    int IsCommandChecked(int index) override;
+
 private:
     bool EnsureQuery();
     void LoadConfig();
     void SaveConfig();
+    void Notify(const std::wstring& msg);
 
     CHardFaultItem m_item;
     ITrafficMonitor* m_app{};
     std::wstring m_tip;
+    std::wstring m_cmd_name[5];
 
     PDH_HQUERY m_query{};
     PDH_HCOUNTER m_counter{};
@@ -84,6 +92,7 @@ private:
     int m_sustain{8};
     int m_cooldown{600};
     int m_beep{1};
+    int m_paused{0};
 
     int m_over{};
     ULONGLONG m_last_alert{};
@@ -140,6 +149,7 @@ void CHardFaultPlugin::LoadConfig()
     m_sustain   = GetPrivateProfileIntW(kIniSection, L"sustain", 8, m_ini_path.c_str());
     m_cooldown  = GetPrivateProfileIntW(kIniSection, L"cooldown", 600, m_ini_path.c_str());
     m_beep      = GetPrivateProfileIntW(kIniSection, L"beep", 1, m_ini_path.c_str());
+    m_paused    = GetPrivateProfileIntW(kIniSection, L"paused", 0, m_ini_path.c_str());
 
     if (m_threshold <= 0) m_threshold = 400;
     if (m_window < 2) m_window = 10;
@@ -156,6 +166,7 @@ void CHardFaultPlugin::SaveConfig()
     WritePrivateProfileStringW(kIniSection, L"sustain",   std::to_wstring(m_sustain).c_str(),   p);
     WritePrivateProfileStringW(kIniSection, L"cooldown",  std::to_wstring(m_cooldown).c_str(),  p);
     WritePrivateProfileStringW(kIniSection, L"beep",      std::to_wstring(m_beep).c_str(),      p);
+    WritePrivateProfileStringW(kIniSection, L"paused",    std::to_wstring(m_paused).c_str(),    p);
 }
 
 void CHardFaultPlugin::OnInitialize(ITrafficMonitor* pApp)
@@ -207,7 +218,11 @@ void CHardFaultPlugin::DataRequired()
     }
 
     // 报警
-    if (avg >= static_cast<double>(m_threshold))
+    if (m_paused)
+    {
+        m_over = 0;
+    }
+    else if (avg >= static_cast<double>(m_threshold))
     {
         ++m_over;
     }
@@ -243,10 +258,77 @@ const wchar_t* CHardFaultPlugin::GetInfo(PluginInfoIndex index)
     case TMI_DESCRIPTION: return L"\u786c\u7f3a\u9875\uff08Hard Faults/sec\uff09\u76d1\u63a7\u4e0e\u544a\u8b66";
     case TMI_AUTHOR:      return L"buddy";
     case TMI_COPYRIGHT:   return L"";
-    case TMI_VERSION:     return L"1.0.0";
+    case TMI_VERSION:     return L"1.1.0";
     case TMI_URL:         return L"";
     default:              return L"";
     }
+}
+
+void CHardFaultPlugin::Notify(const std::wstring& msg)
+{
+    if (m_app) m_app->ShowNotifyMessage(msg.c_str());
+}
+
+const wchar_t* CHardFaultPlugin::GetCommandName(int index)
+{
+    if (index < 0 || index >= 5) return nullptr;
+    switch (index)
+    {
+    case 0:
+        m_cmd_name[0] = L"阈值 +50（当前 " + std::to_wstring(m_threshold) + L"/s）";
+        break;
+    case 1:
+        m_cmd_name[1] = L"阈值 -50";
+        break;
+    case 2:
+        m_cmd_name[2] = L"阈值 恢复默认 400";
+        break;
+    case 3:
+        m_cmd_name[3] = std::wstring(L"报警提示音") + (m_beep ? L"（开）" : L"（关）");
+        break;
+    case 4:
+        m_cmd_name[4] = std::wstring(L"暂停报警") + (m_paused ? L"（已暂停）" : L"");
+        break;
+    default:
+        return nullptr;
+    }
+    return m_cmd_name[index].c_str();
+}
+
+int CHardFaultPlugin::IsCommandChecked(int index)
+{
+    if (index == 3) return m_beep ? 1 : 0;
+    if (index == 4) return m_paused ? 1 : 0;
+    return 0;
+}
+
+void CHardFaultPlugin::OnPluginCommand(int index, void* hWnd, void* para)
+{
+    (void)hWnd; (void)para;
+    switch (index)
+    {
+    case 0: m_threshold += 50; break;
+    case 1: m_threshold -= 50; break;
+    case 2: m_threshold = 400; break;
+    case 3: m_beep = m_beep ? 0 : 1; break;
+    case 4: m_paused = m_paused ? 0 : 1; m_over = 0; break;
+    default: return;
+    }
+
+    if (m_threshold < 10) m_threshold = 10;
+    if (m_threshold > 100000) m_threshold = 100000;
+    SaveConfig();
+
+    std::wstring msg;
+    if (index == 3)
+        msg = std::wstring(L"报警提示音已") + (m_beep ? L"开启" : L"关闭");
+    else if (index == 4)
+        msg = std::wstring(L"报警已") + (m_paused ? L"暂停" : L"恢复");
+    else
+        msg = L"硬缺页报警阈值已设为 " + std::to_wstring(m_threshold) + L"/s";
+
+    Notify(msg);
+    if (m_beep) MessageBeep(MB_OK);
 }
 
 extern "C" __declspec(dllexport) ITMPlugin* TMPluginGetInstance()
